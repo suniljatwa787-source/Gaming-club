@@ -78,7 +78,8 @@ enum class TransactionType {
     GAME_PURCHASE,
     WALLET_TOPUP,
     GAME_REFUND,
-    COIN_REWARD
+    COIN_REWARD,
+    OWNER_WITHDRAWAL
 }
 
 enum class TransactionStatus {

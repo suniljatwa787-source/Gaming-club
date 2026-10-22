@@ -67,6 +67,10 @@ class MainViewModel(
     private val _showOwnerAdminDialog = MutableStateFlow(false)
     val showOwnerAdminDialog: StateFlow<Boolean> = _showOwnerAdminDialog.asStateFlow()
 
+    // Owner Real-Money Withdrawal Dialog toggle (Only visible to verified Owner)
+    private val _showWithdrawalDialog = MutableStateFlow(false)
+    val showWithdrawalDialog: StateFlow<Boolean> = _showWithdrawalDialog.asStateFlow()
+
     val isOwnerModeActive: StateFlow<Boolean> = repository.isOwnerModeActive
 
     // User status/snackbar message
@@ -171,6 +175,51 @@ class MainViewModel(
 
     fun startCheckoutForTopUp(amount: Double) {
         _activePaymentIntent.value = PaymentIntent.TopUpWallet(amount)
+    }
+
+    fun openWithdrawalDialog() {
+        if (isOwnerModeActive.value) {
+            _showWithdrawalDialog.value = true
+        } else {
+            showMessage("Access restricted: Real-money withdrawal is exclusively available to verified Owner.")
+        }
+    }
+
+    fun closeWithdrawalDialog() {
+        _showWithdrawalDialog.value = false
+    }
+
+    fun processOwnerWithdrawal(
+        amountUsd: Double,
+        destinationGateway: PaymentGatewayType,
+        destinationAccount: String,
+        cryptoCurrency: String? = null,
+        cryptoAmount: String? = null
+    ): Boolean {
+        val result = repository.withdrawFunds(
+            amountUsd = amountUsd,
+            destinationType = destinationGateway,
+            destinationAccount = destinationAccount,
+            cryptoCurrency = cryptoCurrency,
+            cryptoAmount = cryptoAmount
+        )
+        return if (result.isSuccess) {
+            val tx = result.getOrThrow()
+            _showWithdrawalDialog.value = false
+            _viewingReceipt.value = tx
+            val displayPayout = if (destinationGateway == PaymentGatewayType.UPI) {
+                "₹${kotlin.math.round(amountUsd * 84).toInt()} sent to Bank of Baroda UPI ($destinationAccount)"
+            } else if (destinationGateway == PaymentGatewayType.BINANCE_PAY) {
+                "$cryptoAmount ${cryptoCurrency ?: "USDT"} sent to Binance Pay ($destinationAccount)"
+            } else {
+                "$$amountUsd sent to $destinationAccount"
+            }
+            showMessage("💸 Real-Money Payout Initiated! $displayPayout. Encrypted receipt generated.")
+            true
+        } else {
+            showMessage(result.exceptionOrNull()?.message ?: "Withdrawal failed.")
+            false
+        }
     }
 
     fun dismissCheckout() {
