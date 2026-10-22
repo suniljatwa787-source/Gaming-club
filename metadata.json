@@ -1,0 +1,6 @@
+{
+  "name": "PlayVault",
+  "description": "Premium gaming platform to buy, download, and instantly play top games with dual payment gateways: INR via Bank of Baroda UPI and Cryptocurrency via Binance Pay (USDT, BTC, ETH, BNB, SOL) directly to owner account.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
